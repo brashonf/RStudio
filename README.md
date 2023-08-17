@@ -1,2 +1,1 @@
-# RStudio
-My RStudio Projects(Assignments)
+Hi! With me being a current Data Science student, I want to upload my assignments and codes that I've completed. It can show my progress and the papers that I have written describing what I've done. Enjoy :)
