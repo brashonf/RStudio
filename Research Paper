@@ -1,0 +1,3 @@
+cd ~/Desktop/Secondary School Performance
+git init
+ls -a
