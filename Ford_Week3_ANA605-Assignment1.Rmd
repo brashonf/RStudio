@@ -1,17 +1,19 @@
 ---
 title: "Assignment 3"
 author: "Brashon Ford"
-date: August 20th
+date: 8-20-2023
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
+
 knitr::opts_chunk$set(echo = TRUE)
 
-## Read in data
-myDataLocation <- "c:\pathtofolderlocation"
-setwd(myDataLocation)
-dat <- read.csv(file = "cancer_data.csv", header = TRUE)
+myDataLocation <- "c:\full/path/to/cancer_data.csv"
+# Read the CSV file from the "Documents" folder
+dat <- read.csv(file = "~/Documents/cancer_data.csv", header = TRUE)
+
+
 
 # Load and install required packages
 library(mosaic)
@@ -32,18 +34,18 @@ library(supernova)
     iii.	Obtain means and standard deviations of perimeter_mean, aggregated by diagnosis
 ```{r}
 #1a i and ii. 
-hist(cancer_data$perimeter_mean , data = cancer_data)
-hist(cancer_data$texture_mean , data = cancer_data)
-summary(cancer_data$perimeter_mean)
-summary(cancer_data$perimeter_mean)
-boxplot(perimeter_mean ~ diagnosis , data = cancer_data,
+hist(dat$perimeter_mean , data = dat)
+hist(dat$texture_mean , data = dat)
+summary(dat$perimeter_mean)
+summary(dat$perimeter_mean)
+boxplot(perimeter_mean ~ diagnosis , data = dat,
         xlab = "Diagnosis" , ylab = "Perimeter Mean",
         main = "Boxplot of Perimeter Mean by Diagnosis")
-frequency(cancer_data$perimeter_mean)
-frequency(cancer_data$diagnosis) 
+frequency(dat$perimeter_mean)
+frequency(dat$diagnosis) 
 
 #1 b
-agg.result <- aggregate(perimeter_mean ~ diagnosis , data = cancer_data,
+agg.result <- aggregate(perimeter_mean ~ diagnosis , data = dat,
           FUN = function(x) c(mean = mean(x), sd(x))) 
 
 print(agg.result) 
@@ -60,9 +62,9 @@ print(agg.result)
 
 
 ```{r}
-cor(cancer_data$perimeter_mean , cancer_data$texture_mean)
-cor.test(cancer_data$perimeter_mean , cancer_data$texture_mean , conf.level = 0.75)
-cor.test(cancer_data$perimeter_mean , cancer_data$texture_mean , conf.level = 0.95)
+cor(dat$perimeter_mean , dat$texture_mean)
+cor.test(dat$perimeter_mean , dat$texture_mean , conf.level = 0.75)
+cor.test(dat$perimeter_mean , dat$texture_mean , conf.level = 0.95)
 #Q2 
 #a 
 0.334
@@ -80,7 +82,7 @@ cor.test(cancer_data$perimeter_mean , cancer_data$texture_mean , conf.level = 0.
   c.	Provide a 95% confidence interval around your parameter estimate. How did you obtain it? Interpret it.
 
 ```{r}
-empty_model <- lm(perimeter_mean ~ 1 , data = cancer_data)
+empty_model <- lm(perimeter_mean ~ 1 , data = dat)
 summary(empty_model)
 
 #a
@@ -107,10 +109,11 @@ summary(empty_model)
   f.	How does the information you received from the confidence interval relate to the hypothesis that this sample represents (is drawn from) a population with these parameter estimates?
 
 ```{r}
-lm(perimeter_mean ~ diagnosis , data = cancer_data)
-cor.test(cancer_data$perimeter_mean , cancer_data$texture_mean , conf.level = 0.95)
-cor.test(cancer_data$perimeter_mean , cancer_data$texture_mean, conf.level = 0.99) 
-effect_size <- effsize::cohen.d(cancer_data$perimeter_mean , cancer_data$diagnosis)
+
+lm(perimeter_mean ~ diagnosis , data = dat)
+cor.test(dat$perimeter_mean , dat$texture_mean , conf.level = 0.95)
+cor.test(dat$perimeter_mean , dat$texture_mean, conf.level = 0.99) 
+effect_size <- effsize::cohen.d(dat$perimeter_mean , dat$diagnosis)
 print(effect_size)
 
 #b and c The method I used to obtain the confidence intervals was by using the cor.test function and then making sure to put that I needed 95% intervals. 95% percent confidence interval:     0.2597318 0.4059340. The method that I used to obtain the data is the confint() function. 99 percent confidence interval:  0.2354118 0.4273442
@@ -119,7 +122,6 @@ print(effect_size)
 #d The effect size is -2.28 the cohen’s d is pretty large for this model; that can explain that the two groups are in completely different directions.
 #e 
 
-#f - Skip
 ```
 ## Question 5
 
@@ -141,10 +143,16 @@ print(effect_size)
   e.	Do you believe there is a relationship between texture_mean and perimeter_mean? Why or why not?
 
 ```{r paged.print=FALSE}
-linear_model <- lm(perimeter_mean ~ texture_mean , data = cancer_data)
+
+data_df <- data.frame(texture_mean = dat$texture_mean, perimeter_mean = dat$perimeter_mean)
+
+linear_model <- lm(perimeter_mean ~ texture_mean, data = data_df)
 summary(linear_model)
 
-data <- data.frame(texture_mean, perimeter_mean)  
+
+
+data <- data.frame(dat$texture_mean,dat$perimeter_mean)
+
 
 slope_function <- function(data, indices) {
   sampled_data <- data[indices, 1000 ]
@@ -152,7 +160,12 @@ slope_function <- function(data, indices) {
   return(coef(model)[2])  
 }
 
-boot_result <- boot(data, slope_function, R = 1000) 
+
+
+install.packages("boot")  # Install the 'boot' package
+library(boot)              # Load the 'boot' package
+
+boot_result <- boot(dat, slope_function, R = 1000) 
 conf_interval <- quantile(boot_result$t, c(0.025, 0.975))
 print("95% Confidence Interval for the Slope:")
 print(conf_interval)
@@ -169,7 +182,7 @@ slope_function <- function(data, indices) {
 }
 
 
-boot_result <- boot(data, slope_function, R = 1000)  
+boot_result <- boot(dat, slope_function, R = 1000)  
 
 conf_interval <- quantile(boot_result$t, c(0.025, 0.75))
 
@@ -179,7 +192,7 @@ print(conf_interval)
 
 
 
-linear.model.2 <- lm(perimeter_mean ~ texture_mean , data = data)
+linear.model.2 <- lm(perimeter_mean ~ texture_mean , data = dat)
 confint(linear.model.2 , level = 0.75)
 
 
