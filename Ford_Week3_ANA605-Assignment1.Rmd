@@ -1,0 +1,215 @@
+---
+title: "Assignment 3"
+author: "Brashon Ford"
+date: August 20th
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+## Read in data
+myDataLocation <- "c:\pathtofolderlocation"
+setwd(myDataLocation)
+dat <- read.csv(file = "cancer_data.csv", header = TRUE)
+
+# Load and install required packages
+library(mosaic)
+#install.packages("effsize")
+library(effsize)
+library(lsr)
+library(supernova)
+```
+
+## Question 1
+1.	Descriptive statistics.
+  a.	Quantitative Variables: perimeter_mean and texture_mean
+    i.	Create a histogram for each variable
+    ii.	Obtain the five number summaries for each variable
+  b.	Categorical Variable: diagnosis
+   i.	Create a boxplot with perimeter_mean as the explanatory variable
+    ii.	Obtain frequencies of the two categories.
+    iii.	Obtain means and standard deviations of perimeter_mean, aggregated by diagnosis
+```{r}
+#1a i and ii. 
+hist(cancer_data$perimeter_mean , data = cancer_data)
+hist(cancer_data$texture_mean , data = cancer_data)
+summary(cancer_data$perimeter_mean)
+summary(cancer_data$perimeter_mean)
+boxplot(perimeter_mean ~ diagnosis , data = cancer_data,
+        xlab = "Diagnosis" , ylab = "Perimeter Mean",
+        main = "Boxplot of Perimeter Mean by Diagnosis")
+frequency(cancer_data$perimeter_mean)
+frequency(cancer_data$diagnosis) 
+
+#1 b
+agg.result <- aggregate(perimeter_mean ~ diagnosis , data = cancer_data,
+          FUN = function(x) c(mean = mean(x), sd(x))) 
+
+print(agg.result) 
+```
+
+## Question 2
+
+2.	Correlation between perimeter_mean and texture_mean
+  a.	Obtain the correlation.
+  b.	Interpret the correlation (reference Assignment One for examples).
+  c.	What is the 95% confidence interval? Use cor.test().
+  d.	What is the 75% confidence interval? Use cor.test().
+  e.	Are you confident that the true population correlation could be zero? Why or why not?
+
+
+```{r}
+cor(cancer_data$perimeter_mean , cancer_data$texture_mean)
+cor.test(cancer_data$perimeter_mean , cancer_data$texture_mean , conf.level = 0.75)
+cor.test(cancer_data$perimeter_mean , cancer_data$texture_mean , conf.level = 0.95)
+#Q2 
+#a 
+0.334
+#b.The correlation is pretty close to 0, which can suggest that there is a weak relationship between the perimeter mean and diagnosis. It is a positive correlation. 
+#c.  0.2597318 0.4059340
+#d 0.29-0.37
+#e I believe it would be true that the population correlation could be zero just based on the p-value that we received. It is a very small number, not too close to 0.05
+```
+
+## Question 3
+
+3.	Fit an empty model for perimeter_mean,
+  a.	What are the parameter estimates? Interpret them.
+  b.	What is the PRE? Interpret it. 
+  c.	Provide a 95% confidence interval around your parameter estimate. How did you obtain it? Interpret it.
+
+```{r}
+empty_model <- lm(perimeter_mean ~ 1 , data = cancer_data)
+summary(empty_model)
+
+#a
+#The parameter estimates just include the intercept which is 92.05
+#b
+#the PRE for this model is 0, there is no value for the PRE in the anova table
+#c
+#	             2.5 %   97.5 %
+#	(Intercept) 90.04806 94.04511
+#We can see we only get one group of intervals; primarily because there is only one parameter. We can see that the lower bound is 90.04 and the upper bound is 94.04.
+
+```
+## Question 4
+
+4.	Fit a linear model with perimeter_mean as the outcome and diagnosis as the explanatory variable.
+  a.	What are the parameter estimates? Interpret them.
+  b.	What are the 95% confidence intervals around your slope? Describe the method you used to obtain them.
+  c.	What are the 99% confidence intervals around your slope? Describe the method you used to obtain them.
+  d.	What is the effect size, expressed as Cohen’s d?
+    i.	Interpret the Cohen’s d from the model.
+    ii.	What is the 99% confidence interval around Cohen’s d?
+    iii.	Interpret the confidence interval for Cohen’s d. What do the units represent?
+  e.	Do you believe there is a relationship between perimeter_mean and diagnosis? Why or why not?
+  f.	How does the information you received from the confidence interval relate to the hypothesis that this sample represents (is drawn from) a population with these parameter estimates?
+
+```{r}
+lm(perimeter_mean ~ diagnosis , data = cancer_data)
+cor.test(cancer_data$perimeter_mean , cancer_data$texture_mean , conf.level = 0.95)
+cor.test(cancer_data$perimeter_mean , cancer_data$texture_mean, conf.level = 0.99) 
+effect_size <- effsize::cohen.d(cancer_data$perimeter_mean , cancer_data$diagnosis)
+print(effect_size)
+
+#b and c The method I used to obtain the confidence intervals was by using the cor.test function and then making sure to put that I needed 95% intervals. 95% percent confidence interval:     0.2597318 0.4059340. The method that I used to obtain the data is the confint() function. 99 percent confidence interval:  0.2354118 0.4273442
+
+
+#d The effect size is -2.28 the cohen’s d is pretty large for this model; that can explain that the two groups are in completely different directions.
+#e 
+
+#f - Skip
+```
+## Question 5
+
+5.	Fit a linear model with perimeter_mean as the outcome and texture_mean as the explanatory variable.
+  a.	What are the parameter estimates? Interpret them.
+  b.	95% confidence intervals around your slope.
+    i.	Construct the confidence intervals using bootstrap with 1000 samples. 
+      1.	What are the units of the confidence intervals?
+      2.	How would you interpret the confidence interval?
+    ii.	Construct the confidence intervals using the model. 
+      1.	What are the units of the confidence intervals?
+      2.	How would you interpret the confidence interval?
+    iii.	Are you confident that the true population slope parameter is not 0? Why or why not?
+  c.	75% confidence intervals around your slope.
+    i.	Construct the confidence intervals using bootstrap with 1000 samples.
+    ii.	Construct the confidence intervals using the model.
+    iii.	Are the confidence intervals from these two methods similar? If they are similar, why is this so? If they are not, why not?
+  d.	What is the effect size, expressed as PRE? Interpret the PRE of the model.
+  e.	Do you believe there is a relationship between texture_mean and perimeter_mean? Why or why not?
+
+```{r paged.print=FALSE}
+linear_model <- lm(perimeter_mean ~ texture_mean , data = cancer_data)
+summary(linear_model)
+
+data <- data.frame(texture_mean, perimeter_mean)  
+
+slope_function <- function(data, indices) {
+  sampled_data <- data[indices, 1000 ]
+  model <- lm(perimeter_mean ~ texture_mean, data = sampled_data)
+  return(coef(model)[2])  
+}
+
+boot_result <- boot(data, slope_function, R = 1000) 
+conf_interval <- quantile(boot_result$t, c(0.025, 0.975))
+print("95% Confidence Interval for the Slope:")
+print(conf_interval)
+
+
+
+data <- data.frame(texture_mean, perimeter_mean)  
+
+
+slope_function <- function(data, indices) {
+  sampled_data <- data[indices, ]
+  model <- lm(perimeter_mean ~ texture_mean, data = sampled_data)
+  return(coef(model)[2]) 
+}
+
+
+boot_result <- boot(data, slope_function, R = 1000)  
+
+conf_interval <- quantile(boot_result$t, c(0.025, 0.75))
+
+
+print("75% Confidence Interval for the Slope:")
+print(conf_interval)
+
+
+
+linear.model.2 <- lm(perimeter_mean ~ texture_mean , data = data)
+confint(linear.model.2 , level = 0.75)
+
+
+model_summary <- summary(linear.model.2)
+pre <- model_summary$r.squared
+print(pre)
+
+#Q5 
+#a For the Intercept I got 55.631 and for the texture mean increment its 1.889.
+
+#bi: The confidence intervals are 1.88-1.88; the units of the confidence intervals would be meters per unit.
+#bii: the confidence intervals show where the the range of values are within the 95%.
+#biii: I believe that the true population is not 0 because the 95% confidence interval does not include 0 at all.
+
+
+
+#c: The confidence intervals for 75% include: 1.45--2.03(This is for the bootstrap model)
+#cii: The confidence intervals for the model include 1.63--2.14.
+#ciii: The two confidence intervals are kind of similar but they are a bit off. The model CI's are a bit moved to the right from the bootstrapped model. They are different just because the bootstrapped model has more samples compared to the original model.
+
+
+#d The effect size, in PRE, is 0.1121223
+#di: I dont believe that the perimeter_mean and texture_mean have a relationship due to the PRE being pretty small. 
+
+
+```
+## Question 6
+
+6.	Comparing the models in Q4 and Q5, which do you believe predicts perimeter_mean better? Why or why not? Justify your reasoning.
+
+```{r paged.print=FALSE}
+```
+I think that texture_mean predicts perimeter_mean a bit better. Just based on the data we got.
